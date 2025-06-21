@@ -1,0 +1,281 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -500,
+        20
+      ],
+      "id": "cd8ece6f-d26c-4826-b705-99b981df2c8e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=9e3e5e89ffe5492fbe061976437aa3de",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        20
+      ],
+      "id": "1e5254e6-d90b-4c5b-ac16-a056cd62baf2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "articles",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        240,
+        260
+      ],
+      "id": "3f73411a-13e6-45fb-aa87-3a669bb35016",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "447cfab1-5f90-4058-94cf-4413c5a12a1a",
+              "name": "title",
+              "value": "={{$json[\"title\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "cee4702d-90f6-4986-8855-17b37ed47999",
+              "name": "summary",
+              "value": "={{$json[\"description\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "af115454-c1af-4e35-961c-1427407ac344",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        20
+      ],
+      "id": "ec6fb504-3daa-4cf4-b8f2-e710f968a1c1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      text: `📰 *${item.json.title}*\\n${item.json.summary}\\n🔗 ${item.json.url}`\n    }\n  }\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "id": "295ddbe3-8ddc-4bc3-9a0e-8d3386887ad9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "chatId": "7257836585",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        20
+      ],
+      "id": "07f0a08d-c971-4ad6-9c6f-fac46e8ec943",
+      "name": "Telegram",
+      "webhookId": "770ff81d-bbcb-418c-8553-96b3d60961ec",
+      "credentials": {
+        "telegramApi": {
+          "id": "P2yfhf4Wykp0ZRMZ",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=provide top news headlines\nuser input:{{ $json['Readable date'] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        20
+      ],
+      "id": "8548f145-bc53-40f3-947c-7caf16d7af50",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "mindcraft-gpt4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        280
+      ],
+      "id": "1716cb79-1689-4c5c-a6b4-06b6b816051b",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "suxAP1qYtlKC0Ekt",
+          "name": "Azure Open AI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=----------------------------------------\n->{{ $('Edit Fields').item.json.title }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        900,
+        260
+      ],
+      "id": "322c6b9a-2358-42fc-968e-00689d9ff1a2",
+      "name": "Discord",
+      "webhookId": "abbc489e-af41-4705-9727-d3ff0370cae4",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "C7YwamIqINY9lfju",
+          "name": "Discord Webhook account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1800b29-f976-4587-ba93-a40571884d6b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d254f22632b73242d841785a670d35469a25b6a297139069fb58a50a78fe8f51"
+  },
+  "id": "pdOxPIfDgjswLRrn",
+  "tags": []
+}
